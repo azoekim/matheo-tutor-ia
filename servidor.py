@@ -2,9 +2,11 @@
 =============================================================================
 FASE 3 y 5: EL SERVIDOR WEB Y EN LA NUBE (servidor.py)
 =============================================================================
-Incluye además el Webhook (/api/whatsapp/webhook) para que cuando tú le
-escribas al número externo del bot en WhatsApp (+1 415 523 8886), el bot
-reciba tu mensaje, consulte a Matheo IA y te responda por WhatsApp.
+Incluye:
+- Servidor Multi-Hilo (ThreadingHTTPServer) para atender móvil, PC, WhatsApp
+  y los chequeos de salud de Render simultáneamente sin bloquearse jamás.
+- Webhook (/api/whatsapp/webhook) para responder mensajes de WhatsApp.
+- Sincronización automática de memoria (/api/sincronizar).
 =============================================================================
 """
 
@@ -13,7 +15,7 @@ import json
 import os
 import threading
 import time
-from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 from memoria import cargar_memoria, guardar_memoria, MEMORIA_INICIAL
@@ -43,20 +45,29 @@ def guardar_api_key_local(llave):
         f.write(llave.strip())
 
 
-class ManejadorTutorIA(SimpleHTTPRequestHandler):
+class ServidorMultiHilo(ThreadingHTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
+
+class ManejadorTutorIA(BaseHTTPRequestHandler):
+
+    def _enviar_bytes(self, cuerpo_bytes, content_type, codigo=200):
+        self.send_response(codigo)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(cuerpo_bytes)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.wfile.write(cuerpo_bytes)
 
     def _enviar_json(self, datos, codigo=200):
         cuerpo = json.dumps(datos, ensure_ascii=False).encode("utf-8")
-        self.send_response(codigo)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(cuerpo)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(cuerpo)
+        self._enviar_bytes(cuerpo, "application/json; charset=utf-8", codigo)
 
     def _leer_cuerpo_peticion(self):
         longitud = int(self.headers.get("Content-Length", 0))
-        if longitud == 0:
+        if longitud <= 0:
             return ""
         return self.rfile.read(longitud).decode("utf-8", errors="ignore")
 
@@ -69,18 +80,19 @@ class ManejadorTutorIA(SimpleHTTPRequestHandler):
             f'<?xml version="1.0" encoding="UTF-8"?>'
             f'<Response><Message>{texto_respuesta}</Message></Response>'
         ).encode("utf-8")
+        self._enviar_bytes(twiml, "text/xml; charset=utf-8", 200)
+
+    def do_HEAD(self):
         self.send_response(200)
-        self.send_header("Content-Type", "text/xml; charset=utf-8")
-        self.send_header("Content-Length", str(len(twiml)))
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Connection", "close")
         self.end_headers()
-        self.wfile.write(twiml)
 
     def do_GET(self):
         parsed = urlparse(self.path)
         ruta = parsed.path
         query_params = parse_qs(parsed.query)
 
-        # Si Twilio llama por GET a /api/whatsapp/webhook o con parámetros Body/From
         if ruta == "/api/whatsapp/webhook" or "Body" in query_params or "WaId" in query_params:
             mensaje_entrante = (query_params.get("Body", [""])[0] or "").strip()
             self._responder_twiml_whatsapp(mensaje_entrante)
@@ -96,29 +108,35 @@ class ManejadorTutorIA(SimpleHTTPRequestHandler):
             })
             return
 
-        if ruta == "/" or ruta == "/index.html":
-            self.path = "/static/index.html"
-        elif not ruta.startswith("/static/"):
-            posible = os.path.join(CARPETA_STATIC, ruta.lstrip("/"))
-            if os.path.exists(posible):
-                self.path = "/static/" + ruta.lstrip("/")
+        if ruta in ("/", "/index.html", "/static/index.html"):
+            archivo_html = os.path.join(CARPETA_STATIC, "index.html")
+            with open(archivo_html, "rb") as f:
+                self._enviar_bytes(f.read(), "text/html; charset=utf-8", 200)
+            return
 
-        return SimpleHTTPRequestHandler.do_GET(self)
+        if ruta in ("/manifest.json", "/static/manifest.json"):
+            archivo_man = os.path.join(CARPETA_STATIC, "manifest.json")
+            with open(archivo_man, "rb") as f:
+                self._enviar_bytes(f.read(), "application/json; charset=utf-8", 200)
+            return
+
+        self._enviar_json({"ok": True, "ruta": ruta}, 200)
 
     def do_POST(self):
         parsed = urlparse(self.path)
         ruta = parsed.path
         cuerpo_raw = self._leer_cuerpo_peticion()
 
-        # Webhook oficial de Twilio WhatsApp: funciona tanto si puso /api/whatsapp/webhook
-        # como si pegó la URL raíz https://matheo-tutor-ia.onrender.com/
         if ruta == "/api/whatsapp/webhook" or "From=whatsapp" in cuerpo_raw or "Body=" in cuerpo_raw or "SmsSid=" in cuerpo_raw:
             form = parse_qs(cuerpo_raw)
             mensaje_entrante = (form.get("Body", [""])[0] or "").strip()
             self._responder_twiml_whatsapp(mensaje_entrante)
             return
 
-        body = json.loads(cuerpo_raw) if cuerpo_raw else {}
+        try:
+            body = json.loads(cuerpo_raw) if cuerpo_raw else {}
+        except Exception:
+            body = {}
 
         if ruta == "/api/chat":
             mensaje = (body.get("mensaje") or "").strip()
@@ -179,8 +197,6 @@ class ManejadorTutorIA(SimpleHTTPRequestHandler):
         if ruta == "/api/sincronizar":
             datos_actuales = cargar_memoria()
             respaldo = body.get("datos_alumno")
-            # Si el servidor gratuito de Render se reinició y perdió la memoria local,
-            # restauramos automáticamente el respaldo del dispositivo del alumno
             if isinstance(respaldo, dict):
                 xp_servidor = datos_actuales.get("puntos_xp", 0)
                 hist_servidor = len(datos_actuales.get("historial_chat", []))
@@ -212,7 +228,7 @@ if __name__ == "__main__":
     hilo_reloj.start()
 
     puerto = int(os.environ.get("PORT", 8000))
-    servidor = ThreadingHTTPServer(("0.0.0.0", puerto), ManejadorTutorIA)
+    servidor = ServidorMultiHilo(("0.0.0.0", puerto), ManejadorTutorIA)
     print(f"============================================================")
     print(f"🎓 TUTOR DE MATEMÁTICAS IA ('Matheo') ACTIVO")
     print(f"🌐 Abre en tu navegador: http://localhost:{puerto}")
