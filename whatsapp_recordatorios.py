@@ -52,10 +52,11 @@ def enviar_whatsapp_twilio(account_sid, auth_token, numero_destino, texto_mensaj
         numero_bot = f"whatsapp:{numero_bot}"
 
     url = f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json"
+    # En cuentas Trial europeas (+4915888620339), Twilio requiere el ContentSid oficial de recordatorio
     datos_form = urllib.parse.urlencode({
         "From": numero_bot,
         "To": destino,
-        "Body": texto_mensaje
+        "ContentSid": "HXfe5ab5f00277942d4d4200328b4d403c"
     }).encode("utf-8")
 
     credenciales = base64.b64encode(f"{sid}:{token}".encode("utf-8")).decode("ascii")
@@ -75,7 +76,7 @@ def enviar_whatsapp_twilio(account_sid, auth_token, numero_destino, texto_mensaj
             respuesta = json.loads(resp.read().decode("utf-8"))
             return {
                 "ok": True,
-                "detalle": f"✅ ¡WhatsApp enviado desde el número del bot (+1 415 523 8886) a tu móvil ({destino})!",
+                "detalle": f"✅ ¡Recordatorio de WhatsApp enviado desde el bot (+49 15888 620339) a tu móvil ({destino})!",
                 "sid": respuesta.get("sid")
             }
     except urllib.error.HTTPError as e:
