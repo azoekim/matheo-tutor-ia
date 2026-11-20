@@ -1,0 +1,2 @@
+# No se requieren librerías externas pesadas: usamos la librería estándar de Python 3
+# Esto garantiza que funcione al instante en tu PC y en cualquier servidor gratuito en la nube.
