@@ -13,7 +13,7 @@ import json
 import os
 import threading
 import time
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 from memoria import cargar_memoria, guardar_memoria, MEMORIA_INICIAL
@@ -44,7 +44,6 @@ def guardar_api_key_local(llave):
 
 
 class ManejadorTutorIA(SimpleHTTPRequestHandler):
-    protocol_version = "HTTP/1.1"
 
     def _enviar_json(self, datos, codigo=200):
         cuerpo = json.dumps(datos, ensure_ascii=False).encode("utf-8")
@@ -213,7 +212,7 @@ if __name__ == "__main__":
     hilo_reloj.start()
 
     puerto = int(os.environ.get("PORT", 8000))
-    servidor = HTTPServer(("0.0.0.0", puerto), ManejadorTutorIA)
+    servidor = ThreadingHTTPServer(("0.0.0.0", puerto), ManejadorTutorIA)
     print(f"============================================================")
     print(f"🎓 TUTOR DE MATEMÁTICAS IA ('Matheo') ACTIVO")
     print(f"🌐 Abre en tu navegador: http://localhost:{puerto}")
