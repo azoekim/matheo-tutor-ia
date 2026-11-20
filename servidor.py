@@ -164,6 +164,24 @@ class ManejadorTutorIA(SimpleHTTPRequestHandler):
             self._enviar_json({"ok": True, "datos_alumno": copia_limpia})
             return
 
+        if ruta == "/api/sincronizar":
+            datos_actuales = cargar_memoria()
+            respaldo = body.get("datos_alumno")
+            # Si el servidor gratuito de Render se reinició y perdió la memoria local,
+            # restauramos automáticamente el respaldo del dispositivo del alumno
+            if isinstance(respaldo, dict):
+                xp_servidor = datos_actuales.get("puntos_xp", 0)
+                hist_servidor = len(datos_actuales.get("historial_chat", []))
+                xp_respaldo = respaldo.get("puntos_xp", 0)
+                hist_respaldo = len(respaldo.get("historial_chat", []))
+                if xp_respaldo > xp_servidor or (xp_servidor == 0 and hist_servidor <= 2 and hist_respaldo > hist_servidor):
+                    for k, v in respaldo.items():
+                        if k in datos_actuales:
+                            datos_actuales[k] = v
+                    guardar_memoria(datos_actuales)
+            self._enviar_json({"ok": True, "datos_alumno": datos_actuales})
+            return
+
         self._enviar_json({"error": "Ruta no encontrada"}, 404)
 
 
