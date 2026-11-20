@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: matheo-tutor-ia
+    runtime: python
+    buildCommand: ""
+    startCommand: "python servidor.py"
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
