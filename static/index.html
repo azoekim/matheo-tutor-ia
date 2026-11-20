@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matheo IA — Tu Tutor Personal de Matemáticas</title>
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#4f46e5" />
+
+  <!-- Librería KaTeX para dibujar fórmulas matemáticas reales como en un libro -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <!-- Librería Marked para convertir negritas y listas de la IA en HTML limpio -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-soft: #334155;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #10b981;
+      --warn: #f59e0b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Cabecera superior */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .brand p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill.level {
+      border-color: #6366f1;
+      color: #a5b4fc;
+    }
+
+    .pill.xp {
+      border-color: #10b981;
+      color: #6ee7b7;
+    }
+
+    .pill.streak {
+      border-color: #f59e0b;
+      color: #fcd34d;
+    }
+
+    /* Contenedor principal: Barra lateral + Chat */
+    .main-container {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    @media (max-width: 860px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .sidebar.abierto-movil {
+        display: flex;
+        position: fixed;
+        inset: 60px 0 0 0;
+        z-index: 50;
+        width: 100%;
+      }
+    }
+
+    /* Barra lateral del alumno */
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .card h3 {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #0f172a;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #10b981);
+      width: 10%;
+      transition: width 0.4s ease;
+    }
+
+    .consejo-box {
+      background: rgba(99, 102, 241, 0.12);
+      border-left: 3px solid var(--primary);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #e2e8f0;
+    }
+
+    .reto-box {
+      background: rgba(16, 185, 129, 0.12);
+      border-left: 3px solid var(--accent);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #1e293b;
+      border: 1px solid var(--border);
+    }
+
+    .tag.ok {
+      border-color: #10b981;
+      color: #6ee7b7;
+    }
+
+    .tag.warn {
+      border-color: #f59e0b;
+      color: #fde68a;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: var(--text);
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .btn-small {
+      margin-top: 8px;
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-small:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-small.secondary {
+      background: var(--panel-soft);
+    }
+
+    /* Zona central de Chat */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .quick-actions {
+      padding: 10px 16px;
+      background: rgba(30, 41, 59, 0.6);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .quick-btn {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .quick-btn:hover {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.15);
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .msg {
+      max-width: 82%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .msg.tutor {
+      align-self: flex-start;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg.usuario {
+      align-self: flex-end;
+      background: var(--primary);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg p {
+      margin-bottom: 8px;
+    }
+
+    .msg p:last-child {
+      margin-bottom: 0;
+    }
+
+    .msg ul,
+    .msg ol {
+      margin-left: 20px;
+      margin-bottom: 8px;
+    }
+
+    .input-bar {
+      padding: 14px 18px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-bar textarea {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      resize: none;
+      height: 48px;
+      outline: none;
+    }
+
+    .input-bar textarea:focus {
+      border-color: var(--primary);
+    }
+
+    .send-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0 20px;
+      height: 48px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .mobile-toggle {
+      display: none;
+      background: var(--panel-soft);
+      border: none;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 860px) {
+      .mobile-toggle {
+        display: inline-block;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- CABECERA -->
+  <header>
+    <div class="brand">
+      <div class="logo">∑</div>
+      <div>
+        <h1>Matheo IA</h1>
+        <p id="subtituloNivel">Cargando tu perfil de aprendizaje...</p>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="pill level">🎓 Nivel <span id="statNivel">1</span>/10</div>
+      <div class="pill xp">⭐ <span id="statXP">0</span> XP</div>
+      <div class="pill streak">🔥 <span id="statRacha">0</span> días</div>
+      <button class="mobile-toggle" onclick="toggleSidebar()">⚙️ Panel</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- BARRA LATERAL: PROGRESO, RETOS, API KEY Y WHATSAPP -->
+    <aside class="sidebar" id="sidebar">
+
+      <!-- 1. Llave del Cerebro Gemini -->
+      <div class="card" id="cardApiKey">
+        <h3>🔑 1. Cerebro IA (Google Gemini)</h3>
+        <p style="font-size: 0.78rem; color: var(--muted);">
+          Pega aquí tu API Key gratuita de <a href="https://aistudio.google.com/app/apikey" target="_blank"
+            style="color: #818cf8;">Google AI Studio</a>:
+        </p>
+        <input type="password" id="inputApiKey" placeholder="AIzaSy..." />
+        <button class="btn-small" onclick="guardarApiKey()">Guardar Llave IA</button>
+        <p id="estadoApiKey" style="font-size: 0.75rem; margin-top: 6px; color: var(--muted);"></p>
+      </div>
+
+      <!-- 2. Reto Activo y Consejo del Tutor -->
+      <div class="card">
+        <h3>🎯 Reto Actual</h3>
+        <div class="reto-box" id="cajaReto">
+          Aún no tienes un reto activo. ¡Pulsa "Hacer Prueba de Nivel" o "Ponme un Reto"!
+        </div>
+        <h3 style="margin-top: 12px;">💡 Último Consejo de Matheo</h3>
+        <div class="consejo-box" id="cajaConsejo">
+          ¡Bienvenido! Empecemos descubriendo tu nivel actual.
+        </div>
+      </div>
+
+      <!-- 3. Progreso y Temas -->
+      <div class="card">
+        <h3>📊 Tu Progreso Matemático</h3>
+        <p style="font-size: 0.8rem; color: var(--muted);">
+          Retos superados: <strong id="statRetos">0</strong>
+        </p>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="barraXP"></div>
+        </div>
+
+        <p style="font-size: 0.78rem; margin-top: 10px; color: #cbd5e1;">✅ Temas dominados:</p>
+        <div class="tag-list" id="listaDominados"></div>
+
+        <p style="font-size: 0.78rem; margin-top: 10px; color: #cbd5e1;">📌 Temas por reforzar:</p>
+        <div class="tag-list" id="listaMejorar"></div>
+      </div>
+
+      <!-- 4. Recordatorios por WhatsApp (Número Externo Oficial, sin tocar tu cuenta) -->
+      <div class="card">
+        <h3>📱 Bot de WhatsApp (Número Externo)</h3>
+        <p style="font-size: 0.75rem; color: var(--muted); line-height: 1.38;">
+          🔒 <strong>100% Seguro:</strong> El bot usa el número externo oficial de <strong>Twilio Sandbox (<code>+1 415 523 8886</code>)</strong>. Tú le escribes a ese número como a un contacto más, sin darle acceso a tu cuenta.
+        </p>
+        <p style="font-size: 0.73rem; color: #a5b4fc; margin-top: 6px; line-height: 1.35;">
+          1. Crea tu cuenta gratuita en <a href="https://www.twilio.com/try-twilio" target="_blank" style="color: #6ee7b7;">Twilio.com</a>.<br>
+          2. En <em>Messaging &rarr; Try it out &rarr; Send a WhatsApp message</em>, envía la palabra <code>join ...</code> desde tu móvil al <strong>+1 415 523 8886</strong>.<br>
+          3. Pega aquí tu <em>Account SID</em> y <em>Auth Token</em>:
+        </p>
+        <input type="text" id="waTwilioSid" placeholder="Twilio Account SID (AC...)" />
+        <input type="password" id="waTwilioToken" placeholder="Twilio Auth Token" />
+        <input type="text" id="waTelefono" placeholder="Tu móvil con prefijo (ej: +34600112233)" />
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+          <label style="font-size: 0.78rem; color: var(--muted);">Hora aviso:</label>
+          <input type="time" id="waHora" value="18:00" style="margin-top: 0;" />
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+          <input type="checkbox" id="waActivo" checked style="width: auto; margin: 0;" />
+          <label for="waActivo" style="font-size: 0.8rem;">Activar recordatorio diario</label>
+        </div>
+        <button class="btn-small" onclick="guardarWhatsApp(false)">Guardar Datos del Bot</button>
+        <button class="btn-small secondary" style="background: #059669;" onclick="guardarWhatsApp(true)">📨 Recibir WhatsApp desde +1 415 523 8886</button>
+        <p id="estadoWA" style="font-size: 0.75rem; margin-top: 6px; color: var(--muted);"></p>
+      </div>
+
+      <!-- 5. Reiniciar perfil -->
+      <div class="card">
+        <h3>🔄 Opciones del Perfil</h3>
+        <button class="btn-small secondary" onclick="reiniciarPerfil()">Reiniciar Prueba de Nivel desde Cero</button>
+      </div>
+
+    </aside>
+
+    <!-- ÁREA DE CHAT CON EL TUTOR -->
+    <main class="chat-area">
+      <!-- Botones de acción rápida -->
+      <div class="quick-actions">
+        <button class="quick-btn"
+          onclick="enviarAccionRapida('Hola Matheo, quiero hacer la prueba de nivel inicial desde cero para que detectes mi nivel.')">🧭
+          Hacer Prueba de Nivel</button>
+        <button class="quick-btn"
+          onclick="enviarAccionRapida('Ponme un nuevo reto matemático adaptado a mi nivel actual.')">🎯 Ponme un
+          Reto</button>
+        <button class="quick-btn"
+          onclick="enviarAccionRapida('No estoy seguro de cómo seguir con este ejercicio, ¿me das una pista sin decirme el resultado final?')">💡
+          Dame una Pista</button>
+        <button class="quick-btn"
+          onclick="enviarAccionRapida('Explícame paso a paso la teoría de mi nivel actual con un ejemplo sencillo.')">📖
+          Explicar Teoría</button>
+        <button class="quick-btn"
+          onclick="enviarAccionRapida('¿Qué consejos me das según mis errores recientes y qué debería repasar hoy?')">🧠
+          Dame un Consejo</button>
+      </div>
+
+      <!-- Mensajes -->
+      <div class="messages" id="contenedorMensajes"></div>
+
+      <!-- Barra de escritura -->
+      <div class="input-bar">
+        <textarea id="cajaTexto"
+          placeholder="Escribe tu respuesta, tu duda matemática o pide un reto... (Pulsa Enter para enviar)"
+          onkeydown="manejarEnter(event)"></textarea>
+        <button class="send-btn" id="btnEnviar" onclick="enviarMensaje()">Enviar ➤</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('abierto-movil');
+    }
+
+    function renderizarMatematicas(elemento) {
+      if (window.renderMathInElement) {
+        renderMathInElement(elemento, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true }
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    function agregarBurbuja(rol, texto) {
+      const contenedor = document.getElementById('contenedorMensajes');
+      const div = document.createElement('div');
+      div.className = `msg ${rol}`;
+
+      if (rol === 'tutor' && window.marked) {
+        div.innerHTML = marked.parse(texto);
+      } else {
+        div.textContent = texto;
+      }
+
+      contenedor.appendChild(div);
+      renderizarMatematicas(div);
+      contenedor.scrollTop = contenedor.scrollHeight;
+    }
+
+    function actualizarPanel(datos, tieneApiKey) {
+      if (!datos) return;
+      document.getElementById('statNivel').textContent = datos.nivel_actual || 1;
+      document.getElementById('statXP').textContent = datos.puntos_xp || 0;
+      document.getElementById('statRacha').textContent = datos.racha_dias || 0;
+      document.getElementById('statRetos').textContent = datos.retos_resueltos || 0;
+      document.getElementById('subtituloNivel').textContent = datos.titulo_nivel || 'Nivel 1';
+
+      const porcentaje = Math.min(100, ((datos.puntos_xp || 0) % 100));
+      document.getElementById('barraXP').style.width = `${Math.max(8, porcentaje)}%`;
+
+      document.getElementById('cajaReto').textContent =
+        datos.reto_activo || 'Sin reto pendiente. ¡Pide uno con el botón "Ponme un Reto"!';
+      document.getElementById('cajaConsejo').textContent =
+        datos.ultimo_consejo || 'Practica un poquito cada día para mantener tu racha.';
+
+      // Etiquetas de temas
+      const dom = document.getElementById('listaDominados');
+      dom.innerHTML = '';
+      (datos.temas_dominados || []).forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'tag ok';
+        span.textContent = t;
+        dom.appendChild(span);
+      });
+      if ((datos.temas_dominados || []).length === 0) {
+        dom.innerHTML = '<span style="font-size:0.75rem;color:var(--muted);">Aún ninguno</span>';
+      }
+
+      const mej = document.getElementById('listaMejorar');
+      mej.innerHTML = '';
+      (datos.temas_por_mejorar || []).forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'tag warn';
+        span.textContent = t;
+        mej.appendChild(span);
+      });
+      if ((datos.temas_por_mejorar || []).length === 0) {
+        mej.innerHTML = '<span style="font-size:0.75rem;color:var(--muted);">Ninguno detectado</span>';
+      }
+
+      // Config WhatsApp
+      if (datos.config_whatsapp) {
+        document.getElementById('waTwilioSid').value = datos.config_whatsapp.twilio_sid || '';
+        document.getElementById('waTwilioToken').value = datos.config_whatsapp.twilio_token || '';
+        document.getElementById('waTelefono').value = datos.config_whatsapp.telefono || '';
+        document.getElementById('waHora').value = datos.config_whatsapp.hora_recordatorio || '18:00';
+        document.getElementById('waActivo').checked = Boolean(datos.config_whatsapp.activo);
+      }
+
+      const estadoKey = document.getElementById('estadoApiKey');
+      if (tieneApiKey) {
+        estadoKey.textContent = '✅ API Key de Gemini configurada y activa.';
+        estadoKey.style.color = '#6ee7b7';
+      } else {
+        estadoKey.textContent = '✅ Cerebro IA Automático ACTIVO (Opcional: pega tu llave de Gemini).';
+        estadoKey.style.color = '#6ee7b7';
+      }
+    }
+
+    async function cargarEstadoInicial() {
+      try {
+        const res = await fetch('/api/estado');
+        const data = await res.json();
+        actualizarPanel(data.datos_alumno, data.tiene_api_key);
+
+        const contenedor = document.getElementById('contenedorMensajes');
+        contenedor.innerHTML = '';
+        const historial = (data.datos_alumno && data.datos_alumno.historial_chat) || [];
+
+        if (historial.length === 0) {
+          agregarBurbuja(
+            'tutor',
+            '¡Hola! Soy **Matheo**, tu tutor personal de matemáticas con IA. 🎓\n\n' +
+            'Estoy aquí para ponerte **retos progresivos**, resolver tus **dudas paso a paso** (sin regalarte la solución a la primera para que aprendas de verdad), corregirte con pistas y enviarte recordatorios.\n\n' +
+            '👉 Si aún no lo has hecho, pega tu **API Key gratuita de Gemini** en el panel de la izquierda y pulsa el botón **"🧭 Hacer Prueba de Nivel"** para que descubramos desde qué nivel empezamos.'
+          );
+        } else {
+          historial.forEach(m => agregarBurbuja(m.rol, m.texto));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function guardarApiKey() {
+      const key = document.getElementById('inputApiKey').value.trim();
+      if (!key) return;
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: key })
+      });
+      const data = await res.json();
+      document.getElementById('inputApiKey').value = '';
+      actualizarPanel(data.datos_alumno, data.tiene_api_key);
+    }
+
+    async function guardarWhatsApp(probarAhora) {
+      const payload = {
+        proveedor: 'twilio',
+        twilio_sid: document.getElementById('waTwilioSid').value,
+        twilio_token: document.getElementById('waTwilioToken').value,
+        telefono: document.getElementById('waTelefono').value,
+        hora_recordatorio: document.getElementById('waHora').value,
+        activo: document.getElementById('waActivo').checked,
+        probar_ahora: probarAhora
+      };
+      const estado = document.getElementById('estadoWA');
+      estado.textContent = probarAhora ? 'Enviando WhatsApp de prueba...' : 'Guardando...';
+      const res = await fetch('/api/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      estado.textContent = data.detalle || 'Guardado';
+      estado.style.color = data.ok ? '#6ee7b7' : '#fca5a5';
+    }
+
+    async function reiniciarPerfil() {
+      if (!confirm('¿Seguro que quieres reiniciar tu nivel, puntos e historial para empezar desde cero?')) return;
+      await fetch('/api/reiniciar', { method: 'POST', body: '{}' });
+      cargarEstadoInicial();
+    }
+
+    function manejarEnter(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        enviarMensaje();
+      }
+    }
+
+    function enviarAccionRapida(texto) {
+      document.getElementById('cajaTexto').value = texto;
+      enviarMensaje();
+    }
+
+    async function enviarMensaje() {
+      const caja = document.getElementById('cajaTexto');
+      const texto = caja.value.trim();
+      if (!texto) return;
+
+      const btn = document.getElementById('btnEnviar');
+      caja.value = '';
+      btn.disabled = true;
+      btn.textContent = 'Pensando...';
+
+      agregarBurbuja('usuario', texto);
+
+      try {
+        const keyInput = document.getElementById('inputApiKey').value.trim();
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensaje: texto, api_key: keyInput })
+        });
+        const data = await res.json();
+        agregarBurbuja('tutor', data.mensaje);
+        if (data.datos_alumno) {
+          actualizarPanel(data.datos_alumno, !data.error);
+        }
+      } catch (e) {
+        agregarBurbuja('tutor', '⚠️ Error de conexión con el servidor.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar ➤';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      cargarEstadoInicial();
+    });
+  </script>
+</body>
+
+</html>
