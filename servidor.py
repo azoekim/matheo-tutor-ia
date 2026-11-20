@@ -60,8 +60,31 @@ class ManejadorTutorIA(SimpleHTTPRequestHandler):
             return ""
         return self.rfile.read(longitud).decode("utf-8", errors="ignore")
 
+    def _responder_twiml_whatsapp(self, mensaje_entrante):
+        llave = obtener_api_key_guardada()
+        resultado = consultar_ia(mensaje_entrante or "Hola Matheo", api_key=llave)
+        texto_respuesta = html.escape(resultado.get("mensaje", "¡Hola! Soy Matheo IA."))
+
+        twiml = (
+            f'<?xml version="1.0" encoding="UTF-8"?>'
+            f'<Response><Message>{texto_respuesta}</Message></Response>'
+        ).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/xml; charset=utf-8")
+        self.send_header("Content-Length", str(len(twiml)))
+        self.end_headers()
+        self.wfile.write(twiml)
+
     def do_GET(self):
-        ruta = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        ruta = parsed.path
+        query_params = parse_qs(parsed.query)
+
+        # Si Twilio llama por GET a /api/whatsapp/webhook o con parámetros Body/From
+        if ruta == "/api/whatsapp/webhook" or "Body" in query_params or "WaId" in query_params:
+            mensaje_entrante = (query_params.get("Body", [""])[0] or "").strip()
+            self._responder_twiml_whatsapp(mensaje_entrante)
+            return
 
         if ruta == "/api/estado":
             datos = cargar_memoria()
@@ -83,27 +106,16 @@ class ManejadorTutorIA(SimpleHTTPRequestHandler):
         return SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self):
-        ruta = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        ruta = parsed.path
         cuerpo_raw = self._leer_cuerpo_peticion()
 
-        # Webhook oficial de Twilio WhatsApp: cuando tú escribes al número del bot (+1 415 523 8886),
-        # Twilio envía tu mensaje a esta ruta y Matheo IA te contesta directamente en WhatsApp.
-        if ruta == "/api/whatsapp/webhook":
+        # Webhook oficial de Twilio WhatsApp: funciona tanto si puso /api/whatsapp/webhook
+        # como si pegó la URL raíz https://matheo-tutor-ia.onrender.com/
+        if ruta == "/api/whatsapp/webhook" or "From=whatsapp" in cuerpo_raw or "Body=" in cuerpo_raw or "SmsSid=" in cuerpo_raw:
             form = parse_qs(cuerpo_raw)
             mensaje_entrante = (form.get("Body", [""])[0] or "").strip()
-            llave = obtener_api_key_guardada()
-            resultado = consultar_ia(mensaje_entrante or "Hola Matheo", api_key=llave)
-            texto_respuesta = html.escape(resultado.get("mensaje", "¡Hola! Soy Matheo IA."))
-
-            twiml = (
-                f'<?xml version="1.0" encoding="UTF-8"?>'
-                f'<Response><Message>{texto_respuesta}</Message></Response>'
-            ).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "text/xml; charset=utf-8")
-            self.send_header("Content-Length", str(len(twiml)))
-            self.end_headers()
-            self.wfile.write(twiml)
+            self._responder_twiml_whatsapp(mensaje_entrante)
             return
 
         body = json.loads(cuerpo_raw) if cuerpo_raw else {}
