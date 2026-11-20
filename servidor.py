@@ -44,6 +44,7 @@ def guardar_api_key_local(llave):
 
 
 class ManejadorTutorIA(SimpleHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
 
     def _enviar_json(self, datos, codigo=200):
         cuerpo = json.dumps(datos, ensure_ascii=False).encode("utf-8")
