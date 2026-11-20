@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Matheo IA — Tu Tutor Personal de Matemáticas</title>
   <link rel="manifest" href="/static/manifest.json" />
   <meta name="theme-color" content="#4f46e5" />
@@ -36,10 +35,12 @@
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
 
-    body {
+    html, body {
       background: var(--bg);
       color: var(--text);
       height: 100vh;
+      height: 100dvh;
+      width: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -49,122 +50,123 @@
     header {
       background: var(--panel);
       border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 60;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
     }
 
     .logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border-radius: 10px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: bold;
     }
 
+    .brand-text {
+      min-width: 0;
+    }
+
     .brand h1 {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 700;
+      white-space: nowrap;
     }
 
     .brand p {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stats-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
     .pill {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--border);
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 999px;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      white-space: nowrap;
     }
 
-    .pill.level {
-      border-color: #6366f1;
-      color: #a5b4fc;
-    }
-
-    .pill.xp {
-      border-color: #10b981;
-      color: #6ee7b7;
-    }
-
-    .pill.streak {
-      border-color: #f59e0b;
-      color: #fcd34d;
-    }
+    .pill.level { border-color: #6366f1; color: #a5b4fc; }
+    .pill.xp { border-color: #10b981; color: #6ee7b7; }
+    .pill.streak { border-color: #f59e0b; color: #fcd34d; }
 
     /* Contenedor principal: Barra lateral + Chat */
     .main-container {
       display: grid;
       grid-template-columns: 330px 1fr;
       flex: 1;
+      min-height: 0;
       overflow: hidden;
-    }
-
-    @media (max-width: 860px) {
-      .main-container {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        display: none;
-      }
-
-      .sidebar.abierto-movil {
-        display: flex;
-        position: fixed;
-        inset: 60px 0 0 0;
-        z-index: 50;
-        width: 100%;
-      }
+      position: relative;
     }
 
     /* Barra lateral del alumno */
     .sidebar {
       background: var(--panel);
       border-right: 1px solid var(--border);
-      padding: 16px;
+      padding: 14px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .close-sidebar-btn {
+      display: none;
+      width: 100%;
+      padding: 10px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
     }
 
     .card {
       background: rgba(15, 23, 42, 0.55);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 14px;
+      padding: 12px;
+      flex-shrink: 0;
     }
 
     .card h3 {
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       margin-bottom: 8px;
       color: #cbd5e1;
       display: flex;
@@ -193,9 +195,10 @@
       border-left: 3px solid var(--primary);
       padding: 10px;
       border-radius: 6px;
-      font-size: 0.85rem;
-      line-height: 1.4;
+      font-size: 0.83rem;
+      line-height: 1.45;
       color: #e2e8f0;
+      overflow-x: auto;
     }
 
     .reto-box {
@@ -203,8 +206,9 @@
       border-left: 3px solid var(--accent);
       padding: 10px;
       border-radius: 6px;
-      font-size: 0.85rem;
-      line-height: 1.4;
+      font-size: 0.83rem;
+      line-height: 1.45;
+      overflow-x: auto;
     }
 
     .tag-list {
@@ -215,25 +219,17 @@
     }
 
     .tag {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       padding: 4px 8px;
       border-radius: 6px;
       background: #1e293b;
       border: 1px solid var(--border);
     }
 
-    .tag.ok {
-      border-color: #10b981;
-      color: #6ee7b7;
-    }
+    .tag.ok { border-color: #10b981; color: #6ee7b7; }
+    .tag.warn { border-color: #f59e0b; color: #fde68a; }
 
-    .tag.warn {
-      border-color: #f59e0b;
-      color: #fde68a;
-    }
-
-    input,
-    select {
+    input, select {
       width: 100%;
       padding: 8px 10px;
       border-radius: 8px;
@@ -247,7 +243,7 @@
     .btn-small {
       margin-top: 8px;
       width: 100%;
-      padding: 8px 12px;
+      padding: 9px 12px;
       border: none;
       border-radius: 8px;
       background: var(--primary);
@@ -258,40 +254,43 @@
       transition: background 0.2s;
     }
 
-    .btn-small:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-small.secondary {
-      background: var(--panel-soft);
-    }
+    .btn-small:hover { background: var(--primary-hover); }
+    .btn-small.secondary { background: var(--panel-soft); }
 
     /* Zona central de Chat */
     .chat-area {
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 0;
       overflow: hidden;
     }
 
     .quick-actions {
-      padding: 10px 16px;
+      padding: 8px 12px;
       background: rgba(30, 41, 59, 0.6);
       border-bottom: 1px solid var(--border);
       display: flex;
       gap: 8px;
       overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+
+    .quick-actions::-webkit-scrollbar {
+      display: none;
     }
 
     .quick-btn {
       background: var(--panel);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 7px 13px;
+      padding: 7px 12px;
       border-radius: 999px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
+      flex-shrink: 0;
       transition: all 0.2s;
     }
 
@@ -302,19 +301,22 @@
 
     .messages {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
-      padding: 20px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
     .msg {
-      max-width: 82%;
-      padding: 14px 18px;
+      max-width: 88%;
+      padding: 12px 15px;
       border-radius: 16px;
-      line-height: 1.55;
-      font-size: 0.95rem;
+      line-height: 1.5;
+      font-size: 0.93rem;
+      overflow-x: auto;
+      word-wrap: break-word;
     }
 
     .msg.tutor {
@@ -331,27 +333,18 @@
       border-bottom-right-radius: 4px;
     }
 
-    .msg p {
-      margin-bottom: 8px;
-    }
-
-    .msg p:last-child {
-      margin-bottom: 0;
-    }
-
-    .msg ul,
-    .msg ol {
-      margin-left: 20px;
-      margin-bottom: 8px;
-    }
+    .msg p { margin-bottom: 8px; }
+    .msg p:last-child { margin-bottom: 0; }
+    .msg ul, .msg ol { margin-left: 18px; margin-bottom: 8px; }
 
     .input-bar {
-      padding: 14px 18px;
+      padding: 10px 12px;
       background: var(--panel);
       border-top: 1px solid var(--border);
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
+      flex-shrink: 0;
     }
 
     .input-bar textarea {
@@ -360,10 +353,10 @@
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 0.95rem;
+      padding: 10px 12px;
+      font-size: 0.93rem;
       resize: none;
-      height: 48px;
+      height: 44px;
       outline: none;
     }
 
@@ -376,11 +369,12 @@
       color: white;
       border: none;
       border-radius: 12px;
-      padding: 0 20px;
-      height: 48px;
+      padding: 0 16px;
+      height: 44px;
       font-weight: 600;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      flex-shrink: 0;
     }
 
     .send-btn:disabled {
@@ -390,38 +384,86 @@
 
     .mobile-toggle {
       display: none;
-      background: var(--panel-soft);
+      background: var(--primary);
       border: none;
       color: white;
-      padding: 6px 10px;
-      border-radius: 8px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
       cursor: pointer;
     }
 
+    /* DISEÑO MÓVIL (IMPORTANTE: Debe ir al final para ocultar el panel lateral por defecto) */
     @media (max-width: 860px) {
+      header {
+        padding: 8px 12px;
+        flex-wrap: wrap;
+      }
+
+      .brand p {
+        max-width: 210px;
+      }
+
+      .stats-bar {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none !important;
+      }
+
+      .sidebar.abierto-movil {
+        display: flex !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 100;
+        width: 100%;
+        height: 100dvh;
+        padding: 16px;
+      }
+
+      .close-sidebar-btn {
+        display: block;
+      }
+
       .mobile-toggle {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .msg {
+        max-width: 94%;
+        font-size: 0.92rem;
       }
     }
   </style>
 </head>
-
 <body>
 
   <!-- CABECERA -->
   <header>
     <div class="brand">
       <div class="logo">∑</div>
-      <div>
+      <div class="brand-text">
         <h1>Matheo IA</h1>
-        <p id="subtituloNivel">Cargando tu perfil de aprendizaje...</p>
+        <p id="subtituloNivel">Cargando tu perfil...</p>
       </div>
     </div>
 
     <div class="stats-bar">
-      <div class="pill level">🎓 Nivel <span id="statNivel">1</span>/10</div>
+      <div class="pill level">🎓 Niv <span id="statNivel">1</span>/10</div>
       <div class="pill xp">⭐ <span id="statXP">0</span> XP</div>
-      <div class="pill streak">🔥 <span id="statRacha">0</span> días</div>
+      <div class="pill streak">🔥 <span id="statRacha">0</span>d</div>
       <button class="mobile-toggle" onclick="toggleSidebar()">⚙️ Panel</button>
     </div>
   </header>
@@ -429,20 +471,9 @@
   <div class="main-container">
     <!-- BARRA LATERAL: PROGRESO, RETOS, API KEY Y WHATSAPP -->
     <aside class="sidebar" id="sidebar">
+      <button class="close-sidebar-btn" onclick="toggleSidebar()">✕ Cerrar Panel y Volver al Chat</button>
 
-      <!-- 1. Llave del Cerebro Gemini -->
-      <div class="card" id="cardApiKey">
-        <h3>🔑 1. Cerebro IA (Google Gemini)</h3>
-        <p style="font-size: 0.78rem; color: var(--muted);">
-          Pega aquí tu API Key gratuita de <a href="https://aistudio.google.com/app/apikey" target="_blank"
-            style="color: #818cf8;">Google AI Studio</a>:
-        </p>
-        <input type="password" id="inputApiKey" placeholder="AIzaSy..." />
-        <button class="btn-small" onclick="guardarApiKey()">Guardar Llave IA</button>
-        <p id="estadoApiKey" style="font-size: 0.75rem; margin-top: 6px; color: var(--muted);"></p>
-      </div>
-
-      <!-- 2. Reto Activo y Consejo del Tutor -->
+      <!-- 1. Reto Activo y Consejo del Tutor -->
       <div class="card">
         <h3>🎯 Reto Actual</h3>
         <div class="reto-box" id="cajaReto">
@@ -454,7 +485,7 @@
         </div>
       </div>
 
-      <!-- 3. Progreso y Temas -->
+      <!-- 2. Progreso y Temas -->
       <div class="card">
         <h3>📊 Tu Progreso Matemático</h3>
         <p style="font-size: 0.8rem; color: var(--muted);">
@@ -471,20 +502,26 @@
         <div class="tag-list" id="listaMejorar"></div>
       </div>
 
-      <!-- 4. Recordatorios por WhatsApp (Número Externo Oficial, sin tocar tu cuenta) -->
+      <!-- 3. Llave del Cerebro Gemini -->
+      <div class="card" id="cardApiKey">
+        <h3>🔑 Cerebro IA (Google Gemini)</h3>
+        <p style="font-size: 0.76rem; color: var(--muted);">
+          Opcional: pega tu API Key gratuita de <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #818cf8;">Google AI Studio</a>:
+        </p>
+        <input type="password" id="inputApiKey" placeholder="AIzaSy..." />
+        <button class="btn-small" onclick="guardarApiKey()">Guardar Llave IA</button>
+        <p id="estadoApiKey" style="font-size: 0.75rem; margin-top: 6px; color: var(--muted);"></p>
+      </div>
+
+      <!-- 4. Recordatorios por WhatsApp (Número Externo Oficial) -->
       <div class="card">
         <h3>📱 Bot de WhatsApp (Número Externo)</h3>
-        <p style="font-size: 0.75rem; color: var(--muted); line-height: 1.38;">
-          🔒 <strong>100% Seguro:</strong> El bot usa el número externo oficial de <strong>Twilio Sandbox (<code>+1 415 523 8886</code>)</strong>. Tú le escribes a ese número como a un contacto más, sin darle acceso a tu cuenta.
-        </p>
-        <p style="font-size: 0.73rem; color: #a5b4fc; margin-top: 6px; line-height: 1.35;">
-          1. Crea tu cuenta gratuita en <a href="https://www.twilio.com/try-twilio" target="_blank" style="color: #6ee7b7;">Twilio.com</a>.<br>
-          2. En <em>Messaging &rarr; Try it out &rarr; Send a WhatsApp message</em>, envía la palabra <code>join ...</code> desde tu móvil al <strong>+1 415 523 8886</strong>.<br>
-          3. Pega aquí tu <em>Account SID</em> y <em>Auth Token</em>:
+        <p style="font-size: 0.74rem; color: var(--muted); line-height: 1.38;">
+          🔒 <strong>100% Seguro:</strong> El bot usa el número externo de Twilio (<code>+49 15888 620339</code>).
         </p>
         <input type="text" id="waTwilioSid" placeholder="Twilio Account SID (AC...)" />
         <input type="password" id="waTwilioToken" placeholder="Twilio Auth Token" />
-        <input type="text" id="waTelefono" placeholder="Tu móvil con prefijo (ej: +34600112233)" />
+        <input type="text" id="waTelefono" placeholder="Tu móvil con prefijo (ej: +34651856413)" />
         <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
           <label style="font-size: 0.78rem; color: var(--muted);">Hora aviso:</label>
           <input type="time" id="waHora" value="18:00" style="margin-top: 0;" />
@@ -494,7 +531,6 @@
           <label for="waActivo" style="font-size: 0.8rem;">Activar recordatorio diario</label>
         </div>
         <button class="btn-small" onclick="guardarWhatsApp(false)">Guardar Datos del Bot</button>
-        <button class="btn-small secondary" style="background: #059669;" onclick="guardarWhatsApp(true)">📨 Recibir WhatsApp desde +1 415 523 8886</button>
         <p id="estadoWA" style="font-size: 0.75rem; margin-top: 6px; color: var(--muted);"></p>
       </div>
 
@@ -503,28 +539,17 @@
         <h3>🔄 Opciones del Perfil</h3>
         <button class="btn-small secondary" onclick="reiniciarPerfil()">Reiniciar Prueba de Nivel desde Cero</button>
       </div>
-
     </aside>
 
     <!-- ÁREA DE CHAT CON EL TUTOR -->
     <main class="chat-area">
       <!-- Botones de acción rápida -->
       <div class="quick-actions">
-        <button class="quick-btn"
-          onclick="enviarAccionRapida('Hola Matheo, quiero hacer la prueba de nivel inicial desde cero para que detectes mi nivel.')">🧭
-          Hacer Prueba de Nivel</button>
-        <button class="quick-btn"
-          onclick="enviarAccionRapida('Ponme un nuevo reto matemático adaptado a mi nivel actual.')">🎯 Ponme un
-          Reto</button>
-        <button class="quick-btn"
-          onclick="enviarAccionRapida('No estoy seguro de cómo seguir con este ejercicio, ¿me das una pista sin decirme el resultado final?')">💡
-          Dame una Pista</button>
-        <button class="quick-btn"
-          onclick="enviarAccionRapida('Explícame paso a paso la teoría de mi nivel actual con un ejemplo sencillo.')">📖
-          Explicar Teoría</button>
-        <button class="quick-btn"
-          onclick="enviarAccionRapida('¿Qué consejos me das según mis errores recientes y qué debería repasar hoy?')">🧠
-          Dame un Consejo</button>
+        <button class="quick-btn" onclick="enviarAccionRapida('Hola Matheo, quiero hacer la prueba de nivel inicial desde cero para que detectes mi nivel.')">🧭 Prueba de Nivel</button>
+        <button class="quick-btn" onclick="enviarAccionRapida('Ponme un nuevo reto matemático adaptado a mi nivel actual.')">🎯 Ponme un Reto</button>
+        <button class="quick-btn" onclick="enviarAccionRapida('No estoy seguro de cómo seguir con este ejercicio, ¿me das una pista sin decirme el resultado final?')">💡 Pista</button>
+        <button class="quick-btn" onclick="enviarAccionRapida('Explícame paso a paso la teoría de mi nivel actual con un ejemplo sencillo.')">📖 Teoría</button>
+        <button class="quick-btn" onclick="enviarAccionRapida('¿Qué consejos me das según mis errores recientes y qué debería repasar hoy?')">🧠 Consejo</button>
       </div>
 
       <!-- Mensajes -->
@@ -532,20 +557,21 @@
 
       <!-- Barra de escritura -->
       <div class="input-bar">
-        <textarea id="cajaTexto"
-          placeholder="Escribe tu respuesta, tu duda matemática o pide un reto... (Pulsa Enter para enviar)"
-          onkeydown="manejarEnter(event)"></textarea>
+        <textarea id="cajaTexto" placeholder="Escribe tu respuesta o duda..." onkeydown="manejarEnter(event)"></textarea>
         <button class="send-btn" id="btnEnviar" onclick="enviarMensaje()">Enviar ➤</button>
       </div>
     </main>
   </div>
 
   <script>
+    const CLAVE_RESPALDO_LOCAL = 'matheo_ia_memoria_respaldo_v1';
+
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('abierto-movil');
     }
 
     function renderizarMatematicas(elemento) {
+      if (!elemento) return;
       if (window.renderMathInElement) {
         renderMathInElement(elemento, {
           delimiters: [
@@ -557,6 +583,16 @@
           throwOnError: false
         });
       }
+    }
+
+    function ponerTextoConMatematicas(elemento, texto) {
+      if (!elemento) return;
+      if (window.marked) {
+        elemento.innerHTML = marked.parse(texto);
+      } else {
+        elemento.textContent = texto;
+      }
+      renderizarMatematicas(elemento);
     }
 
     function agregarBurbuja(rol, texto) {
@@ -577,6 +613,12 @@
 
     function actualizarPanel(datos, tieneApiKey) {
       if (!datos) return;
+
+      // Guardamos respaldo en el navegador/móvil para que nunca se pierda la memoria
+      try {
+        localStorage.setItem(CLAVE_RESPALDO_LOCAL, JSON.stringify(datos));
+      } catch (e) {}
+
       document.getElementById('statNivel').textContent = datos.nivel_actual || 1;
       document.getElementById('statXP').textContent = datos.puntos_xp || 0;
       document.getElementById('statRacha').textContent = datos.racha_dias || 0;
@@ -586,12 +628,15 @@
       const porcentaje = Math.min(100, ((datos.puntos_xp || 0) % 100));
       document.getElementById('barraXP').style.width = `${Math.max(8, porcentaje)}%`;
 
-      document.getElementById('cajaReto').textContent =
-        datos.reto_activo || 'Sin reto pendiente. ¡Pide uno con el botón "Ponme un Reto"!';
-      document.getElementById('cajaConsejo').textContent =
-        datos.ultimo_consejo || 'Practica un poquito cada día para mantener tu racha.';
+      ponerTextoConMatematicas(
+        document.getElementById('cajaReto'),
+        datos.reto_activo || 'Sin reto pendiente. ¡Pide uno con el botón "🎯 Ponme un Reto"!'
+      );
+      ponerTextoConMatematicas(
+        document.getElementById('cajaConsejo'),
+        datos.ultimo_consejo || 'Practica un poquito cada día para mantener tu racha.'
+      );
 
-      // Etiquetas de temas
       const dom = document.getElementById('listaDominados');
       dom.innerHTML = '';
       (datos.temas_dominados || []).forEach(t => {
@@ -616,7 +661,6 @@
         mej.innerHTML = '<span style="font-size:0.75rem;color:var(--muted);">Ninguno detectado</span>';
       }
 
-      // Config WhatsApp
       if (datos.config_whatsapp) {
         document.getElementById('waTwilioSid').value = datos.config_whatsapp.twilio_sid || '';
         document.getElementById('waTwilioToken').value = datos.config_whatsapp.twilio_token || '';
@@ -630,13 +674,28 @@
         estadoKey.textContent = '✅ API Key de Gemini configurada y activa.';
         estadoKey.style.color = '#6ee7b7';
       } else {
-        estadoKey.textContent = '✅ Cerebro IA Automático ACTIVO (Opcional: pega tu llave de Gemini).';
+        estadoKey.textContent = '✅ Cerebro IA Automático ACTIVO.';
         estadoKey.style.color = '#6ee7b7';
       }
     }
 
     async function cargarEstadoInicial() {
       try {
+        // Si tenemos respaldo local con más progreso que un servidor recién despertado, lo sincronizamos
+        let respaldoLocal = null;
+        try {
+          const guardado = localStorage.getItem(CLAVE_RESPALDO_LOCAL);
+          if (guardado) respaldoLocal = JSON.parse(guardado);
+        } catch (e) {}
+
+        if (respaldoLocal) {
+          await fetch('/api/sincronizar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ datos_alumno: respaldoLocal })
+          }).catch(() => {});
+        }
+
         const res = await fetch('/api/estado');
         const data = await res.json();
         actualizarPanel(data.datos_alumno, data.tiene_api_key);
@@ -649,8 +708,7 @@
           agregarBurbuja(
             'tutor',
             '¡Hola! Soy **Matheo**, tu tutor personal de matemáticas con IA. 🎓\n\n' +
-            'Estoy aquí para ponerte **retos progresivos**, resolver tus **dudas paso a paso** (sin regalarte la solución a la primera para que aprendas de verdad), corregirte con pistas y enviarte recordatorios.\n\n' +
-            '👉 Si aún no lo has hecho, pega tu **API Key gratuita de Gemini** en el panel de la izquierda y pulsa el botón **"🧭 Hacer Prueba de Nivel"** para que descubramos desde qué nivel empezamos.'
+            'Pulsa arriba el botón **"🧭 Prueba de Nivel"** para empezar con la Pregunta 1, o escríbeme cualquier duda matemática abajo.'
           );
         } else {
           historial.forEach(m => agregarBurbuja(m.rol, m.texto));
@@ -684,7 +742,7 @@
         probar_ahora: probarAhora
       };
       const estado = document.getElementById('estadoWA');
-      estado.textContent = probarAhora ? 'Enviando WhatsApp de prueba...' : 'Guardando...';
+      estado.textContent = 'Guardando...';
       const res = await fetch('/api/whatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -697,6 +755,7 @@
 
     async function reiniciarPerfil() {
       if (!confirm('¿Seguro que quieres reiniciar tu nivel, puntos e historial para empezar desde cero?')) return;
+      try { localStorage.removeItem(CLAVE_RESPALDO_LOCAL); } catch (e) {}
       await fetch('/api/reiniciar', { method: 'POST', body: '{}' });
       cargarEstadoInicial();
     }
@@ -721,7 +780,7 @@
       const btn = document.getElementById('btnEnviar');
       caja.value = '';
       btn.disabled = true;
-      btn.textContent = 'Pensando...';
+      btn.textContent = '...';
 
       agregarBurbuja('usuario', texto);
 
@@ -747,8 +806,8 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       cargarEstadoInicial();
+      setTimeout(() => renderizarMatematicas(document.body), 600);
     });
   </script>
 </body>
-
 </html>
